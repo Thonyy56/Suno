@@ -7,6 +7,9 @@ from PIL import Image
 import torch
 from tkinter import Tk, filedialog
 from translate import Translator
+import cv2
+from pyzbar.pyzbar import decode
+import webbrowser
 
 os.system("title Suno")
 
@@ -62,6 +65,8 @@ def menu_principal():
         Escolha_Dois()
     elif escolha == 3:
         Escolha_Tres()
+    elif escolha == 4:
+        Escolha_Quatro()
     else:
         print("Opção não identificada... Tente novamente")
         engine.say("Perdão, não entendi o que digitou. Tente novamente.")
@@ -212,13 +217,80 @@ def Escolha_Tres():
 
 def Escolha_Quatro():
     limpar_tela()
-    print("Bem vindo ao Leitor de informações alimentares.")
-    engine.say("Bem vindo ao Leitor de Informações Alimentares. Aqui você poderá inserir códigos para receber informações sobre alimentos desejados.")
+    print("Bem-vindo ao Leitor de QR Code com Ações!")
+    engine.say("Bem-vindo ao Leitor de QR Code com Ações. Aponte a câmera para um QR Code para que possamos ler e agir.")
     engine.runAndWait()
 
+    def acao_saudacao():
+        print("Olá! Você escaneou o QR Code 'SAUDAR'!")
+        engine.say("Olá! Você escaneou o QR Code saudar!")
+        engine.runAndWait()
+
+    def acao_ajuda():
+        print("Você pediu ajuda!")
+        engine.say("Você pediu ajuda!")
+        engine.runAndWait()
+
+    def acao_padrao():
+        print("QR Code reconhecido, mas sem ação definida.")
+        engine.say("QR Code reconhecido, mas sem ação definida.")
+        engine.runAndWait()
+
+    acoes_qrcode = {
+        "SAUDAR": acao_saudacao,
+        "AJUDA": acao_ajuda,
+        # Adicione outros comandos conforme quiser
+    }
+
+    def executar_acao(dado):
+        print(f"Dado lido: {dado}")
+        engine.say(f"Dado lido: {dado}")
+        engine.runAndWait()
+
+        if dado.startswith("http") or dado.startswith("Alimento #1"):
+            print("Abrindo site...")
+            engine.say("Abrindo site no navegador.")
+            engine.runAndWait()
+            webbrowser.open(dado)
+        else:
+            acoes_qrcode.get(dado, acao_padrao)()
+
+    cap = cv2.VideoCapture(0)
+    print("Aguardando QR Code... Pressione 'q' para sair.")
+    engine.say("Aguardando QR Code. Pressione Q para sair.")
+    engine.runAndWait()
+
+    while True:
+        ret, frame = cap.read()
+        if not ret:
+            print("Erro ao acessar a câmera.")
+            break
+
+        for qr in decode(frame):
+            dados = qr.data.decode('utf-8')
+            executar_acao(dados)
+            cv2.rectangle(frame, (qr.rect.left, qr.rect.top),
+                          (qr.rect.left + qr.rect.width, qr.rect.top + qr.rect.height),
+                          (0, 255, 0), 2)
+
+        try:
+            cv2.imshow('Leitor QR Code', frame)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        except:
+            print("Aviso: janela de vídeo não pôde ser exibida neste ambiente.")
+            break
+
+    cap.release()
+    try:
+        cv2.destroyAllWindows()
+    except:
+        pass
+
+    print("Voltar ao menu principal - Digite qualquer tecla")
+    input()
+    menu_principal()
+
+
     
-
-
-
-
 tela_inicial()
