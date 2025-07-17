@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://thonyy56.github.io/SunoApp/assets/icon.png" width="200" alt="Suno Icon"/>
+  <img src="https://thonyy56.github.io/Suno/assets/icon.png" width="200" alt="Suno Icon"/>
 </p>
 
 <h1 align="center">Suno</h1>
