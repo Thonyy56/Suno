@@ -60,9 +60,18 @@ Em desenvolvimento:
 
 ---
 
-## 📂 Repositório
+## 📂 Repositórios
 
-🔗 [https://github.com/Thonyy56/Suno](https://github.com/Thonyy56/Suno)
+| Repositório | Descrição |
+|-------------|-----------|
+| [**Suno (App)**](https://github.com/Thonyy56/Suno) | Código-fonte do aplicativo |
+| [**SunoApp (Site)**](https://github.com/Thonyy56/SunoApp) | Código do site oficial |
+
+---
+
+<p align="center">
+  <em>Obrigado por apoiar este projeto! 💛</em>
+</p>
 
 ---
 
@@ -70,4 +79,3 @@ Em desenvolvimento:
 
 Sugestões, melhorias e testes são bem-vindos!  
 Este projeto é feito com carinho para promover **inclusão e autonomia**.
-
