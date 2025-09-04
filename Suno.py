@@ -14,9 +14,9 @@ try:
 except ImportError:
     decode = None
 
-PRIMARY_COLOR = "#7E57C2"  # Roxo médio
-SECONDARY_COLOR = "#FFFFFF"  # Branco
-ACCENT_COLOR = "#B39DDB"    # Roxo claro
+PRIMARY_COLOR = "#7E57C2"
+SECONDARY_COLOR = "#FFFFFF"
+ACCENT_COLOR = "#B39DDB"
 TEXT_COLOR = "#333333"
 FONT_STYLE = ("Arial", 12)
 
@@ -27,42 +27,34 @@ class SunoApp:
         self.root.geometry("1000x700")
         self.root.configure(bg=SECONDARY_COLOR)
         
-        # Inicializações
         self.reader = easyocr.Reader(['pt'])
         self.processor = BlipProcessor.from_pretrained("Salesforce/blip-image-captioning-base")
         self.model = BlipForConditionalGeneration.from_pretrained("Salesforce/blip-image-captioning-base")
         self.translator = Translator(to_lang="pt")
 
-        # Dicionário de QR-Codes → mensagens
         self.qr_dict = {
             "leite": "Este alimento contém lactose. Cuidado para quem tem intolerância.",
             "amendoim": "Atenção: contém amendoim. Pode causar reações alérgicas.",
             "gluten": "Contém glúten. Não é adequado para pessoas com doença celíaca.",
             "suco": "Este é um suco natural. Sem adição de açúcar.",
         }
-        # Container principal
         self.main_container = tk.Frame(self.root, bg=SECONDARY_COLOR)
         self.main_container.pack(fill="both", expand=True)
-        
-        # Páginas
+
         self.pages = {}
         
-        # Criar todas as páginas
         self.create_home_page()
         self.create_text_reader_page()
         self.create_image_reader_page()
         self.create_image_interpreter_page()
         self.create_food_reader_page()
         
-        # Mostrar a página inicial
         self.show_page("home")
         
-        # Configurações da câmera
         self.camera_active = False
         self.cap = None
         self.current_image = None
 
-        # Mensagem de boas-vindas com TTS
         self.root.after(500, self.welcome_message)
 
     def welcome_message(self):
@@ -74,7 +66,6 @@ class SunoApp:
      page = tk.Frame(self.main_container, bg="#EDE7F6")
      self.pages["home"] = page
 
-     # Header
      header_frame = tk.Frame(page, bg=PRIMARY_COLOR)
      header_frame.pack(fill="x", pady=(0, 30))
 
@@ -88,12 +79,17 @@ class SunoApp:
      )
      title_label.pack()
 
-     # Carregar ícones (salve em assets/)
+     # Carregar ícones e aumentar tamanho
+     def load_icon(path, size=(64, 64)):
+        img = Image.open(path)
+        img = img.resize(size, Image.LANCZOS)
+        return ImageTk.PhotoImage(img)
+
      self.icons = {
-        "text": tk.PhotoImage(file="assets/text.png"),
-        "image": tk.PhotoImage(file="assets/image.png"),
-        "interpret": tk.PhotoImage(file="assets/interpret.png"),
-        "food": tk.PhotoImage(file="assets/food.png")
+        "text": load_icon("assets/App/L_Textos.png"),
+        "image": load_icon("assets/App/L_T_Imagens.png"),
+        "interpret": load_icon("assets/App/I_Imagens.png"),
+        "food": load_icon("assets/App/L_I_Alimentares.png")
      }
 
      # Botões principais
@@ -112,8 +108,8 @@ class SunoApp:
         btn = tk.Button(
             buttons_frame,
             text=text,
-            image=icon,        # Ícone
-            compound="left",   # Ícone à esquerda do texto
+            image=icon,
+            compound="left",
             command=command,
             bg=ACCENT_COLOR,
             fg=TEXT_COLOR,
@@ -122,8 +118,10 @@ class SunoApp:
             padx=20,
             pady=20,
             width=280,
-            anchor="w"         # Alinha ícone + texto à esquerda
-         )
+            anchor="w",
+            borderwidth=0,           # Remove borda
+            highlightthickness=0     # Remove destaque da borda
+        )
         btn.grid(row=row, column=col, padx=30, pady=30, sticky="nsew")
 
      for i in range(2):
@@ -586,26 +584,39 @@ class SunoApp:
             self.update_camera_feed()
     
     def update_camera_feed(self):
-        """Atualiza o feed da câmera e verifica QR Codes"""
-        if self.camera_active and self.cap.isOpened():
-            ret, frame = self.cap.read()
-            if ret:
-                frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                frame = cv2.resize(frame, (700, 300))
-                
-                # Tenta decodificar QR Codes
-                if decode:
-                    qr_codes = decode(frame)
-                    for qr in qr_codes:
-                        self.process_qr_code(qr, frame)
-                
-                # Converte para PhotoImage e mostra no canvas
-                img = Image.fromarray(frame)
-                self.current_image = ImageTk.PhotoImage(img)
-                self.camera_canvas.create_image((700 - img.width)/2, 0, anchor=tk.NW, image=self.current_image)
-                
-                # Agenda a próxima atualização
-                self.root.after(100, self.update_camera_feed)
+     """Atualiza o feed da câmera e verifica QR Codes"""
+     if self.camera_active and self.cap.isOpened():
+        ret, frame = self.cap.read()
+        if ret:
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            # Mantém proporção da imagem (exemplo: 800x450)
+            target_width, target_height = 800, 450
+            h, w, _ = frame.shape
+            aspect = w / h
+            if w > h:
+                new_w = target_width
+                new_h = int(target_width / aspect)
+            else:
+                new_h = target_height
+                new_w = int(target_height * aspect)
+            frame = cv2.resize(frame, (new_w, new_h))
+
+            # Tenta decodificar QR Codes
+            if decode:
+                qr_codes = decode(frame)
+                for qr in qr_codes:
+                    self.process_qr_code(qr, frame)
+
+            # Converte para PhotoImage e mostra no canvas centralizado
+            img = Image.fromarray(frame)
+            self.current_image = ImageTk.PhotoImage(img)
+            x_offset = (target_width - new_w) // 2
+            y_offset = (target_height - new_h) // 2
+            self.camera_canvas.delete("all")
+            self.camera_canvas.create_image(x_offset, y_offset, anchor=tk.NW, image=self.current_image)
+
+            # Agenda a próxima atualização
+            self.root.after(100, self.update_camera_feed)
     
     def process_qr_code(self, qr, frame):
         """Processa um QR Code detectado"""
